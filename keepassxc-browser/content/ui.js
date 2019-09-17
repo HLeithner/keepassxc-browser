@@ -155,6 +155,13 @@ const DOMRectToArray = function(domRect) {
     return [ domRect.bottom, domRect.height, domRect.left, domRect.right, domRect.top, domRect.width, domRect.x, domRect.y ];
 };
 
+const createStylesheet = function(file) {
+    const stylesheet = document.createElement('link');
+    stylesheet.setAttribute('rel', 'stylesheet');
+    stylesheet.setAttribute('href', browser.runtime.getURL(file));
+    return stylesheet;
+};
+
 // Enables dragging
 document.addEventListener('mousemove', function(e) {
     if (kpxcPasswordDialog.selected === kpxcPasswordDialog.titleBar) {
@@ -191,4 +198,17 @@ HTMLDivElement.prototype.appendMultiple = function(...args) {
 
 Element.prototype.getLowerCaseAttribute = function(attr) {
     return this.getAttribute(attr) ? this.getAttribute(attr).toLowerCase() : undefined;
+};
+
+Element.prototype._attachShadow = Element.prototype.attachShadow;
+Element.prototype.attachShadow = function () {
+    return this._attachShadow( { mode: 'closed' } );
+};
+
+Object.prototype.shadowSelector = function(value) {
+    return this.shadowRoot ? this.shadowRoot.querySelector(value) : undefined;
+};
+
+Object.prototype.shadowSelectorAll = function(value) {
+    return this.shadowRoot ? this.shadowRoot.querySelectorAll(value) : undefined;
 };

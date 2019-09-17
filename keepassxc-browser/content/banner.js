@@ -6,29 +6,24 @@ const kpxcBanner = {};
 kpxcBanner.banner = undefined;
 kpxcBanner.created = false;
 kpxcBanner.credentials = {};
+kpxcBanner.wrapper = undefined;
 
 kpxcBanner.destroy = function() {
     kpxcBanner.created = false;
     kpxcBanner.credentials = {};
 
-    const dialog = $('.kpxc-banner-dialog');
+    const dialog = kpxcBanner.shadowSelector('.kpxc-banner-dialog');
     if (dialog) {
-        document.body.removeChild(dialog);
+        kpxcBanner.banner.removeChild(dialog);
     }
 
     browser.runtime.sendMessage({
         action: 'remove_credentials_from_tab_information'
     });
 
-    const banners = document.querySelectorAll('.kpxc-banner');
-    if (banners.length > 0) {
-        for (const b of banners) {
-            document.body.removeChild(b);
-        }
-        return;
+    if (kpxcBanner.wrapper) {
+        document.body.removeChild(kpxcBanner.wrapper);
     }
-
-    document.body.removeChild(kpxcBanner.banner);
 };
 
 kpxcBanner.create = async function(credentials = {}) {
@@ -98,12 +93,12 @@ kpxcBanner.create = async function(credentials = {}) {
         }
 
         // If a banner dialog is shown, display the main banner
-        const dialog = $('.kpxc-banner-dialog');
+        const dialog = kpxcBanner.shadowSelector('.kpxc-banner-dialog');
         if (dialog) {
-            $('#kpxc-banner-btn-new').hidden = false;
-            $('#kpxc-banner-btn-update').hidden = false;
-            $('.kpxc-checkbox').disabled = false;
-            document.body.removeChild(dialog);
+            kpxcBanner.shadowSelector('#kpxc-banner-btn-new').hidden = false;
+            kpxcBanner.shadowSelector('#kpxc-banner-btn-update').hidden = false;
+            kpxcBanner.shadowSelector('.kpxc-checkbox').disabled = false;
+            kpxcBanner.banner.removeChild(dialog);
         } else {
             if (ignoreCheckbox.checked) {
                 kpxc.ignoreSite([ window.top.location.href ]);
@@ -116,7 +111,17 @@ kpxcBanner.create = async function(credentials = {}) {
     bannerInfo.appendMultiple(icon, infoText, usernameText, usernameSpan);
     bannerButtons.appendMultiple(newButton, updateButton, separator, ignoreCheckbox, checkboxLabel, dismissButton);
     banner.appendMultiple(bannerInfo, bannerButtons);
-    document.body.appendChild(banner);
+
+    const styleSheet = createStylesheet('css/banner.css');
+    const buttonStyleSheet = createStylesheet('css/button.css');
+
+    const wrapper = document.createElement('div');
+    this.shadowRoot = wrapper.attachShadow({ mode: 'closed' });
+    this.shadowRoot.append(styleSheet);
+    this.shadowRoot.append(buttonStyleSheet);
+    this.shadowRoot.append(banner);
+    kpxcBanner.wrapper = wrapper;
+    document.body.append(wrapper);
 };
 
 kpxcBanner.saveNewCredentials = async function(credentials = {}) {
@@ -182,7 +187,7 @@ kpxcBanner.saveNewCredentials = async function(credentials = {}) {
                 a.setAttribute('id', 'root-child');
             }
 
-            $('ul#list').appendChild(a);
+            kpxcBanner.shadowSelector('ul#list').appendChild(a);
             addChildren(child, a, depth);
         }
     };
@@ -217,11 +222,11 @@ kpxcBanner.saveNewCredentials = async function(credentials = {}) {
         const a = createLink(g.name, g.uuid, g.children.length > 0);
         a.setAttribute('id', 'root');
 
-        $('ul#list').appendChild(a);
+        kpxcBanner.shadowSelector('ul#list').appendChild(a);
         addChildren(g, a, depth);
     }
 
-    $('.kpxc-banner-dialog').style.display = 'block';
+    kpxcBanner.shadowSelector('.kpxc-banner-dialog').style.display = 'block';
 };
 
 kpxcBanner.updateCredentials = async function(credentials = {}) {
@@ -239,15 +244,15 @@ kpxcBanner.updateCredentials = async function(credentials = {}) {
         kpxcBanner.verifyResult(res);
     } else {
         await kpxcBanner.createCredentialDialog();
-        $('.kpxc-banner-dialog .username-new .strong').textContent = credentials.username;
-        $('.kpxc-banner-dialog .username-exists .strong').textContent = credentials.username;
+        kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-new .strong').textContent = credentials.username;
+        kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-exists .strong').textContent = credentials.username;
 
         if (credentials.usernameExists) {
-            $('.kpxc-banner-dialog .username-new').style.display = 'none';
-            $('.kpxc-banner-dialog .username-exists').style.display = 'block';
+            kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-new').style.display = 'none';
+            kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-exists').style.display = 'block';
         } else {
-            $('.kpxc-banner-dialog .username-new').style.display = 'block';
-            $('.kpxc-banner-dialog .username-exists').style.display = 'none';
+            kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-new').style.display = 'block';
+            kpxcBanner.shadowSelector('.kpxc-banner-dialog .username-exists').style.display = 'none';
         }
 
         for (let i = 0; i < credentials.list.length; i++) {
@@ -290,10 +295,10 @@ kpxcBanner.updateCredentials = async function(credentials = {}) {
                 a.style.fontWeight = 'bold';
             }
 
-            $('ul#list').appendChild(a);
+            kpxcBanner.shadowSelector('ul#list').appendChild(a);
         }
 
-        $('.kpxc-banner-dialog').style.display = 'block';
+        kpxcBanner.shadowSelector('.kpxc-banner-dialog').style.display = 'block';
     }
 };
 
@@ -333,9 +338,9 @@ kpxcBanner.getDefaultGroup = function(groups, defaultGroup) {
 };
 
 kpxcBanner.createCredentialDialog = async function() {
-    $('#kpxc-banner-btn-new').hidden = true;
-    $('#kpxc-banner-btn-update').hidden = true;
-    $('.kpxc-checkbox').disabled = true;
+    kpxcBanner.shadowSelector('#kpxc-banner-btn-new').hidden = true;
+    kpxcBanner.shadowSelector('#kpxc-banner-btn-update').hidden = true;
+    kpxcBanner.shadowSelector('.kpxc-checkbox').disabled = true;
 
     const connectedDatabase = await browser.runtime.sendMessage({
         action: 'get_connected_database'
@@ -365,13 +370,13 @@ kpxcBanner.createCredentialDialog = async function() {
     usernameNew.append(kpxcUI.createElement('span', 'strong'));
     usernameExists.append(kpxcUI.createElement('span', 'strong'));
     dialog.appendMultiple(databaseText, usernameNew, usernameExists, chooseCreds, list);
-    document.body.appendChild(dialog);
+    kpxcBanner.banner.appendChild(dialog);
 };
 
 kpxcBanner.createGroupDialog = function() {
-    $('#kpxc-banner-btn-new').hidden = true;
-    $('#kpxc-banner-btn-update').hidden = true;
-    $('.kpxc-checkbox').disabled = true;
+    kpxcBanner.shadowSelector('#kpxc-banner-btn-new').hidden = true;
+    kpxcBanner.shadowSelector('#kpxc-banner-btn-update').hidden = true;
+    kpxcBanner.shadowSelector('.kpxc-checkbox').disabled = true;
 
     const dialog = kpxcUI.createElement('div', 'kpxc-banner-dialog');
     const chooseGroup = kpxcUI.createElement('p', '', {}, tr('rememberChooseGroup'));
@@ -382,5 +387,5 @@ kpxcBanner.createGroupDialog = function() {
     dialog.style.right = Pixels(0);
 
     dialog.appendMultiple(chooseGroup, list);
-    document.body.appendChild(dialog);
+    kpxcBanner.banner.appendChild(dialog);
 };
